@@ -1,5 +1,4 @@
 import express from 'express';
-import cron from 'node-cron';
 import { Leader } from './leader.js';
 import { Paxos } from './paxos.js';
 import { prepareHTTPWrapper } from './helper.js';
@@ -8,7 +7,7 @@ const CONTAINER_NAME = process.env.CONTAINER_NAME ?? 'Unknown';
 const NEIGHBORS = ['service3001', 'service3002', 'service3003', 'service3004', 'service3005'];
 
 const app = express();
-const leader = new Leader(NEIGHBORS);
+export const leader = new Leader(NEIGHBORS);
 export const paxos = new Paxos(CONTAINER_NAME, NEIGHBORS);
 
 app.use(express.json());
@@ -23,22 +22,36 @@ app.get('/launch_post', (req, res) => {
   return res.send(prepareHTTPWrapper());
 });
 
-// Internal Paxos call
-app.post('/prepare', (req, res) => {
-  return res.send(paxos.promiseMessage(req.body));
+app.get('/launch_election', (req, res) => {
+  paxos.newElection();
+});
+
+// Internal Paxos calls
+await app.post('/prepare_ballot', (req, res) => {
+  return res.json(paxos.promiseResponse(req.body));
+});
+
+app.post('/ballot_box', (req) => {
+  paxos.ballotReceipt(req.body);
+});
+
+app.post('/vote_confirm', (req) => {
+  paxos.voteReceipt(req.body);
 });
 
 export const dummy = (a: number): number => {
   return a + 1;
 };
-
-// The CRON job that makes this tick - runs every 5 seconds
-cron.schedule('*/12 * * * *', () => {
-  console.log('Checking leader status');
-  if (!leader.checkLeader()) {
+/*
+setInterval(async () => {
+  if (!(await leader.checkLeader())) {
     console.log('Leader down - initiating Paxos protocol');
-    paxos.paxosProtocol();
+    leader.leader = null;
+    leader.leaderSearch = true;
+    paxos.newElection();
+  } else {
+    console.log('Healthy leader');
   }
-});
-
+}, 5000);
+*/
 export default app;

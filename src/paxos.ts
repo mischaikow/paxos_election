@@ -1,106 +1,132 @@
 import axios from 'axios';
-import { STATUS, sleep } from './helper.js';
-import { Leader } from './leader.js';
-import { LivePromResponse, PrepMessage, PromResponse } from './paxos.types.js';
+import { leader } from './app.js';
+import { STATUS, randomIntFromInterval, sleep } from './helper.js';
+import { BallotMessage, LedgerEntry, LivePromResponse, PrepMessage, PromResponse } from './paxos.types.js';
 
 export class Paxos {
   me: string;
-  paxosLedger: string[];
-  lastPrepare: number;
   neighbors: string[];
+  lastProposalNumber: number;
+  paxosLedger: LedgerEntry[];
 
   constructor(me: string, neighbors: string[]) {
     this.me = me;
-    this.paxosLedger = [''];
-    this.lastPrepare = 0;
     this.neighbors = neighbors;
+    this.lastProposalNumber = -1;
+    this.paxosLedger = [];
   }
 
-  async newElection(leader: Leader) {
-    const hasLeader = false;
-    while (!hasLeader) {
-      if (await this.paxosProtocol()) {
-        break;
-      } else {
-        await sleep(100);
-      }
-
-      if (leader.leader !== null) {
-        break;
-      }
+  async newElection() {
+    while (!leader.leader) {
+      await this.paxosProtocol();
+      //await sleep(randomIntFromInterval(250000, 350000));
     }
-
-    console.log(`New leader elected - $${leader.leader}`);
   }
 
-  async paxosProtocol(): Promise<boolean> {
-    // Run part 1, and if successful, run part 2
-    this.lastPrepare++;
-    const ballot = await this.prepare(this.lastPrepare);
+  async paxosProtocol() {
+    const ballot = await this.prepareBallot(this.lastProposalNumber + 1);
     if (ballot !== undefined) {
-      // return await this.election(this.lastPrepare);
-      // run part 2
+      await this.sendBallot(ballot);
     }
-
-    return false;
   }
 
-  async prepare(proposalNumber: number): Promise<string | undefined> {
-    const responses: PromResponse[] = await Promise.all(
+  async prepareBallot(proposalNumber: number): Promise<BallotMessage | undefined> {
+    const responses = await Promise.allSettled(
       this.neighbors.map((neighbor) => {
-        return this.sendOnePrepareMessage(neighbor, proposalNumber);
+        return this.sendOnePrepareBallot(neighbor, proposalNumber);
       }),
     );
 
-    let voterCounter = 0;
-    let lastVote = -1;
+    let responseCounter = 0;
+    let lastProposalNumber = -1;
     let latestAnswer;
     for (const response of responses) {
-      if (response.status === STATUS.nack) {
-        this.paxosLedger[response.previousProposalNumber!] = response.previousAcceptedValue!;
-      } else if (response.status === STATUS.promise) {
-        voterCounter++;
-        if (response.previousProposalNumber > lastVote) {
-          lastVote = response.previousProposalNumber;
-          latestAnswer = response.previousAcceptedValue;
+      if (response.value!.status! === STATUS.promise) {
+        responseCounter++;
+        if (response.value!.previousProposalNumber! > lastProposalNumber) {
+          lastProposalNumber = response.value!.previousProposalNumber;
+          latestAnswer = response.value!.previousAcceptedValue;
         }
       }
     }
 
-    if (voterCounter > this.neighbors.length / 2) {
-      return latestAnswer ?? this.me;
+    if (responseCounter > this.neighbors.length / 2) {
+      return {
+        proposalNumber: proposalNumber,
+        leaderProposal: latestAnswer ?? this.me,
+      };
     }
-
-    return undefined;
   }
 
-  async sendOnePrepareMessage(neighbor: string, proposalNumber: number): Promise<PromResponse> {
+  async sendOnePrepareBallot(neighbor: string, proposalNumber: number): Promise<PromResponse> {
     return await axios({
       method: 'post',
-      url: `http://${neighbor}:3000/prepare`,
+      url: `http://${neighbor}:3000/prepare_ballot`,
       timeout: 500,
       data: {
         proposalNumber: proposalNumber,
       },
     })
       .then((res) => {
-        console.log(res.data);
         return res.data;
       })
       .catch(() => {
-        return {
-          status: STATUS.failure,
-          neighbor: neighbor,
-        };
+        return STATUS.failure;
       });
   }
 
-  promiseMessage(ask: PrepMessage): LivePromResponse {
-    return {
-      status: ask.proposalNumber < this.lastPrepare ? STATUS.nack : STATUS.promise,
-      neighbor: this.me,
-      previousProposalNumber: this.paxosLedger.length - 1,
-      previousAcceptedValue: this.paxosLedger.at(-1),
-    };
+  sendBallot(ballot: BallotMessage) {
+    this.neighbors.map((neighbor) => {
+      axios({
+        method: 'post',
+        url: `http://${neighbor}:3000/ballot_box`,
+        data: ballot,
+      });
+    });
+  }
+
+  sendVoteConfirms(ballot: LedgerEntry) {
+    this.neighbors.map((neighbor) => {
+      axios({
+        method: 'post',
+        url: `http://${neighbor}:3000/vote_confirm`,
+        data: ballot,
+      });
+    });
+  }
+
+  promiseResponse(ask: PrepMessage): LivePromResponse | undefined {
+    if (ask.proposalNumber > this.lastProposalNumber) {
+      this.lastProposalNumber = ask.proposalNumber;
+      return {
+        status: STATUS.promise,
+        previousProposalNumber: this.paxosLedger.length - 1,
+        previousAcceptedValue: this.paxosLedger.at(-1)?.leaderProposal, // ?? undefined,
+      };
+    }
+  }
+
+  async ballotReceipt(ask: BallotMessage) {
+    if (ask.proposalNumber === this.lastProposalNumber) {
+      const ballot = {
+        proposalNumber: ask.proposalNumber,
+        voteCount: 0,
+        leaderProposal: ask.leaderProposal,
+      };
+      this.paxosLedger[ask.proposalNumber] = ballot;
+
+      await this.sendVoteConfirms(ballot);
+    }
+  }
+
+  voteReceipt(ballot: LedgerEntry) {
+    if (!this.paxosLedger[ballot.proposalNumber]) {
+      this.paxosLedger[ballot.proposalNumber] = ballot;
+    }
+    this.paxosLedger[ballot.proposalNumber].voteCount++;
+    if (this.paxosLedger[ballot.proposalNumber].voteCount > this.neighbors.length / 2) {
+      leader.leader = ballot.leaderProposal;
+    }
+    console.log(this.paxosLedger);
   }
 }
