@@ -1,5 +1,3 @@
-import axios from 'axios';
-
 export class Leader {
   leader: string | null;
   neighbors: string[];
@@ -17,17 +15,15 @@ export class Leader {
     }
 
     console.log(`Checking leadership - ${this.leader}`);
-    await axios({
-      method: 'get',
-      url: `http://${this.leader}:3000/`,
-    })
-      .then(() => {
-        return true;
-      })
-      .catch(() => {
-        this.leader = null;
-        return false;
+    try {
+      await fetch(`http://${this.leader}:3000/`, {
+        method: 'GET',
       });
+      return true;
+    } catch (error) {
+      this.leader = null;
+      return false;
+    }
     return false;
   }
 }

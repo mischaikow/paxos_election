@@ -9,13 +9,13 @@ export interface PrepMessage {
 }
 
 export interface LivePromResponse {
-  status: 'promise';
-  previousProposalNumber: number;
+  standing: 'promise';
+  previousVotedNumber: number;
   previousAcceptedValue: string | undefined;
 }
 
 export interface DeadPromResponse {
-  status: 'failure';
+  standing: 'failure';
 }
 
 export type PromResponse = LivePromResponse | DeadPromResponse;

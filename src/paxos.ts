@@ -1,18 +1,18 @@
-import axios from 'axios';
+import fetch from 'node-fetch';
 import { leader } from './app.js';
-import { STATUS, randomIntFromInterval, sleep } from './helper.js';
+import { STANDING } from './helper.js';
 import { BallotMessage, LedgerEntry, LivePromResponse, PrepMessage, PromResponse } from './paxos.types.js';
 
 export class Paxos {
   me: string;
   neighbors: string[];
-  lastProposalNumber: number;
+  previousProposalNumber: number;
   paxosLedger: LedgerEntry[];
 
   constructor(me: string, neighbors: string[]) {
     this.me = me;
     this.neighbors = neighbors;
-    this.lastProposalNumber = -1;
+    this.previousProposalNumber = -1;
     this.paxosLedger = [];
   }
 
@@ -24,7 +24,7 @@ export class Paxos {
   }
 
   async paxosProtocol() {
-    const ballot = await this.prepareBallot(this.lastProposalNumber + 1);
+    const ballot = await this.prepareBallot(this.previousProposalNumber + 1);
     if (ballot !== undefined) {
       await this.sendBallot(ballot);
     }
@@ -40,12 +40,13 @@ export class Paxos {
     let responseCounter = 0;
     let lastProposalNumber = -1;
     let latestAnswer;
+
     for (const response of responses) {
-      if (response.value!.status! === STATUS.promise) {
+      if (response.status === 'fulfilled' && response.value.standing === STANDING.promise) {
         responseCounter++;
-        if (response.value!.previousProposalNumber! > lastProposalNumber) {
-          lastProposalNumber = response.value!.previousProposalNumber;
-          latestAnswer = response.value!.previousAcceptedValue;
+        if (response.value.previousVotedNumber > lastProposalNumber) {
+          lastProposalNumber = response.value.previousVotedNumber;
+          latestAnswer = response.value.previousAcceptedValue;
         }
       }
     }
@@ -59,55 +60,54 @@ export class Paxos {
   }
 
   async sendOnePrepareBallot(neighbor: string, proposalNumber: number): Promise<PromResponse> {
-    return await axios({
-      method: 'post',
-      url: `http://${neighbor}:3000/prepare_ballot`,
-      timeout: 500,
-      data: {
-        proposalNumber: proposalNumber,
-      },
-    })
-      .then((res) => {
-        return res.data;
-      })
-      .catch(() => {
-        return STATUS.failure;
+    const body = {
+      proposalNumber: proposalNumber,
+    };
+    try {
+      const response = await fetch(`http://${neighbor}:3000/prepare_ballot`, {
+        method: 'POST',
+        body: JSON.stringify(body),
+        headers: { 'Content-Type': 'application/json' },
       });
+      return await response.json();
+    } catch (error) {
+      return { standing: STANDING.failure };
+    }
   }
 
   sendBallot(ballot: BallotMessage) {
     this.neighbors.map((neighbor) => {
-      axios({
+      fetch(`http://${neighbor}:3000/ballot_box`, {
         method: 'post',
-        url: `http://${neighbor}:3000/ballot_box`,
-        data: ballot,
+        body: JSON.stringify(ballot),
+        headers: { 'Content-Type': 'application/json' },
       });
     });
   }
 
   sendVoteConfirms(ballot: LedgerEntry) {
     this.neighbors.map((neighbor) => {
-      axios({
+      fetch(`http://${neighbor}:3000/vote_confirm`, {
         method: 'post',
-        url: `http://${neighbor}:3000/vote_confirm`,
-        data: ballot,
+        body: JSON.stringify(ballot),
+        headers: { 'Content-Type': 'application/json' },
       });
     });
   }
 
   promiseResponse(ask: PrepMessage): LivePromResponse | undefined {
-    if (ask.proposalNumber > this.lastProposalNumber) {
-      this.lastProposalNumber = ask.proposalNumber;
+    if (ask.proposalNumber > this.previousProposalNumber) {
+      this.previousProposalNumber = ask.proposalNumber;
       return {
-        status: STATUS.promise,
-        previousProposalNumber: this.paxosLedger.length - 1,
+        standing: STANDING.promise,
+        previousVotedNumber: this.paxosLedger.length - 1,
         previousAcceptedValue: this.paxosLedger.at(-1)?.leaderProposal, // ?? undefined,
       };
     }
   }
 
   async ballotReceipt(ask: BallotMessage) {
-    if (ask.proposalNumber === this.lastProposalNumber) {
+    if (ask.proposalNumber === this.previousProposalNumber) {
       const ballot = {
         proposalNumber: ask.proposalNumber,
         voteCount: 0,
@@ -124,9 +124,9 @@ export class Paxos {
       this.paxosLedger[ballot.proposalNumber] = ballot;
     }
     this.paxosLedger[ballot.proposalNumber].voteCount++;
+
     if (this.paxosLedger[ballot.proposalNumber].voteCount > this.neighbors.length / 2) {
       leader.leader = ballot.leaderProposal;
     }
-    console.log(this.paxosLedger);
   }
 }
