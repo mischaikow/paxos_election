@@ -1,20 +1,38 @@
+import { sleep } from './helper.js';
+import { Paxos } from './paxos.js';
+
 export class Leader {
+  me: string;
   leader: string | null;
   neighbors: string[];
-  leaderSearch: boolean;
+  searching: boolean;
+  paxosElection: Paxos;
 
-  constructor(neighbors: string[]) {
+  constructor(me: string, neighbors: string[]) {
+    this.me = me;
     this.leader = null;
     this.neighbors = neighbors;
-    this.leaderSearch = false;
+    this.searching = false;
+    this.paxosElection = new Paxos(this.me, this.neighbors);
   }
 
-  async checkLeader(): Promise<boolean> {
-    if (this.leaderSearch) {
-      return true;
+  async shouldLaunchLeaderSearch(): Promise<boolean> {
+    if (this.searching) {
+      return false;
     }
 
-    console.log(`Checking leadership - ${this.leader}`);
+    if (await this.isLeaderHealthy()) {
+      return false;
+    }
+
+    return true;
+  }
+
+  async isLeaderHealthy(): Promise<boolean> {
+    if (this.leader === null) {
+      false;
+    }
+
     try {
       await fetch(`http://${this.leader}:3000/`, {
         method: 'GET',
@@ -24,6 +42,19 @@ export class Leader {
       this.leader = null;
       return false;
     }
-    return false;
+  }
+
+  async newPaxos(): Promise<boolean> {
+    this.searching = true;
+    this.paxosElection = await new Paxos(this.me, this.neighbors);
+    return true;
+  }
+
+  async findLeader(msWait: number) {
+    console.log(`Find Leader launched`);
+    await sleep(msWait);
+    await this.paxosElection.newElection(this);
+    console.log(`Leader elected - ${this.leader}`);
+    this.searching = false;
   }
 }

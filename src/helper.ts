@@ -1,3 +1,6 @@
+export const CONTAINER_NAME = process.env.CONTAINER_NAME ?? 'Unknown';
+export const NEIGHBORS = ['service3001', 'service3002', 'service3003', 'service3004', 'service3005'];
+
 export const STANDING: {
   nack: 'nack';
   promise: 'promise';

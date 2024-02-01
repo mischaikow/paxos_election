@@ -1,7 +1,8 @@
 import fetch from 'node-fetch';
-import { leader } from './app.js';
-import { STANDING } from './helper.js';
+import { STANDING, randomIntFromInterval, sleep } from './helper.js';
 import { BallotMessage, LedgerEntry, LivePromResponse, PrepMessage, PromResponse } from './paxos.types.js';
+import { Leader } from './leader.js';
+import { leader } from './app.js';
 
 export class Paxos {
   me: string;
@@ -16,10 +17,11 @@ export class Paxos {
     this.paxosLedger = [];
   }
 
-  async newElection() {
+  async newElection(leader: Leader) {
+    console.log('New Election kicked off');
     while (!leader.leader) {
       await this.paxosProtocol();
-      //await sleep(randomIntFromInterval(250000, 350000));
+      await sleep(randomIntFromInterval(this.neighbors.length * 50, this.neighbors.length * 100));
     }
   }
 
@@ -28,6 +30,7 @@ export class Paxos {
     if (ballot !== undefined) {
       await this.sendBallot(ballot);
     }
+    this.previousProposalNumber++;
   }
 
   async prepareBallot(proposalNumber: number): Promise<BallotMessage | undefined> {
@@ -63,6 +66,8 @@ export class Paxos {
     const body = {
       proposalNumber: proposalNumber,
     };
+    console.log(`Leader: ${leader.leader}`);
+    console.log(`is Searching: ${leader.searching}`);
     try {
       const response = await fetch(`http://${neighbor}:3000/prepare_ballot`, {
         method: 'POST',
@@ -76,22 +81,31 @@ export class Paxos {
   }
 
   sendBallot(ballot: BallotMessage) {
-    this.neighbors.map((neighbor) => {
-      fetch(`http://${neighbor}:3000/ballot_box`, {
-        method: 'post',
-        body: JSON.stringify(ballot),
-        headers: { 'Content-Type': 'application/json' },
-      });
+    this.neighbors.map(async (neighbor) => {
+      try {
+        await fetch(`http://${neighbor}:3000/ballot_box`, {
+          method: 'post',
+          body: JSON.stringify(ballot),
+          headers: { 'Content-Type': 'application/json' },
+        });
+      } catch (error) {
+        console.log(error);
+      }
     });
   }
 
-  sendVoteConfirms(ballot: LedgerEntry) {
-    this.neighbors.map((neighbor) => {
-      fetch(`http://${neighbor}:3000/vote_confirm`, {
-        method: 'post',
-        body: JSON.stringify(ballot),
-        headers: { 'Content-Type': 'application/json' },
-      });
+  async sendVoteConfirms(ballot: LedgerEntry) {
+    this.neighbors.map(async (neighbor) => {
+      try {
+        await fetch(`http://${neighbor}:3000/vote_confirm`, {
+          method: 'post',
+          body: JSON.stringify(ballot),
+          headers: { 'Content-Type': 'application/json' },
+        });
+      } catch (error) {
+        console.log(error);
+        console.log(this.paxosLedger);
+      }
     });
   }
 
