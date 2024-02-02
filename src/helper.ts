@@ -12,7 +12,7 @@ export const STANDING: {
 };
 
 export function sleep(ms: number): Promise<void> {
-  console.log(`wait time is ${ms / 1000}`);
+  console.log(`wait time is ${ms / 1000}s`);
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });

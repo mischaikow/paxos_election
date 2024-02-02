@@ -1,0 +1,11 @@
+### Checking in
+get http://localhost:3001
+
+
+### Kick off leadership election
+get http://localhost:3001/launch_election
+
+
+### Get the ledger printed 
+get http://localhost:3004/ledger
+

@@ -25,6 +25,11 @@ app.get('/launch_election', (req, res) => {
   return res.send('Leader Search Initiated\n');
 });
 
+app.get('/ledger', (req, res) => {
+  leader.paxosElection.printLedger();
+  return res.send('hit');
+});
+
 // Internal Paxos calls
 app.post('/prepare_ballot', async (req, res) => {
   if (await leader.shouldLaunchLeaderSearch()) {

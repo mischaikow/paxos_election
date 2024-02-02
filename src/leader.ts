@@ -1,4 +1,5 @@
 import { sleep } from './helper.js';
+import { myFetch } from './myFetch.js';
 import { Paxos } from './paxos.js';
 
 export class Leader {
@@ -34,11 +35,14 @@ export class Leader {
     }
 
     try {
-      await fetch(`http://${this.leader}:3000/`, {
+      await myFetch(`http://${this.leader}:3000/`, {
+        retries: 3,
+        retryDelay: 300,
         method: 'GET',
       });
       return true;
     } catch (error) {
+      console.log(`leader is unhealthy ${this.leader}`);
       this.leader = null;
       return false;
     }
@@ -46,6 +50,7 @@ export class Leader {
 
   async newPaxos(): Promise<boolean> {
     this.searching = true;
+    this.leader = null;
     this.paxosElection = await new Paxos(this.me, this.neighbors);
     return true;
   }
