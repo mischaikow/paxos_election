@@ -2,6 +2,7 @@
   "type": "module",
   "scripts": {
     "dev": "concurrently \"pnpm run watch-compile\" \"pnpm run cluster-dev\"",
+    "dev-local": "concurrently \"pnpm run watch-compile\" \"pnpm run watch-dev\"",
     "watch-compile": "swc src -w --out-dir dist",
     "cluster-dev": "sh ./clusterdev.sh",
     "docker-dev": "sh ./dockerdev.sh",
@@ -17,7 +18,8 @@
     "express": "^4.18.2",
     "fetch-retry": "^5.0.6",
     "node-cron": "^3.0.3",
-    "node-fetch": "^3.3.2"
+    "node-fetch": "^3.3.2",
+    "ws": "^8.16.0"
   },
   "devDependencies": {
     "@swc/cli": "^0.1.63",
@@ -27,6 +29,7 @@
     "@types/node": "^20.10.7",
     "@types/node-cron": "^3.0.11",
     "@types/node-fetch": "^2.6.11",
+    "@types/ws": "^8.5.10",
     "@typescript-eslint/eslint-plugin": "^6.18.1",
     "@typescript-eslint/parser": "^6.18.1",
     "chokidar": "^3.5.3",

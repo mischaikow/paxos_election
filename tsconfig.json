@@ -3,7 +3,6 @@
   "include": ["src/**/*", "index.ts"],
   "exclude": ["node_modules"],
   "compilerOptions": {
-    "types": ["jest"],
     "module": "Node16"
   }
 }
