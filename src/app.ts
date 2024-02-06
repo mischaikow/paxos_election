@@ -2,6 +2,7 @@ import express from 'express';
 import { WebSocketServer } from 'ws';
 import { Leader } from './leader.js';
 import { CONTAINER_NAME, NEIGHBORS, PORT_API, PORT_WS } from './helper.js';
+import { WebSocketServers } from './webSocketServer.js';
 
 const app = express();
 export const leader = new Leader(CONTAINER_NAME, NEIGHBORS);
@@ -61,6 +62,9 @@ const server = app
   .use((req, res) => res.sendFile('/', { root: __dirname }))
   .listen(PORT_WS, () => console.log(`listening on ${PORT_WS}.`));
 
+// const wsServers = new WebSocketServers(server, leader);
+new WebSocketServers(server, leader);
+/*
 const wss = new WebSocketServer({ server });
 
 wss.on('connection', (ws) => {
@@ -84,7 +88,7 @@ wss.on('connection', (ws) => {
     }
   });
 });
-
+*/
 export default app;
 
 export const dummy = (a: number): number => {
