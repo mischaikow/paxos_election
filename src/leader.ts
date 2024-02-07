@@ -1,3 +1,4 @@
+import { wsServers } from './app.js';
 import { sleep } from './helper.js';
 import { myFetch } from './myFetch.js';
 import { Paxos } from './paxos.js';
@@ -43,6 +44,7 @@ export class Leader {
       return true;
     } catch (error) {
       console.log(`leader is unhealthy ${this.leader}`);
+      wsServers.leaderDown();
       this.leader = null;
       return false;
     }
@@ -60,6 +62,7 @@ export class Leader {
     await sleep(msWait);
     await this.paxosElection.newElection(this);
     console.log(`Leader elected - ${this.leader}`);
+    wsServers.leaderElected();
     this.searching = false;
   }
 }

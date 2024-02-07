@@ -1,5 +1,4 @@
 import express from 'express';
-import { WebSocketServer } from 'ws';
 import { Leader } from './leader.js';
 import { CONTAINER_NAME, NEIGHBORS, PORT_API, PORT_WS } from './helper.js';
 import { WebSocketServers } from './webSocketServer.js';
@@ -13,14 +12,14 @@ app.set('port', PORT_API);
 app.get('/', (req, res) => {
   return res.send(`${CONTAINER_NAME} is awake\n`);
 });
-/*
+
 setInterval(async () => {
   if (await leader.shouldLaunchLeaderSearch()) {
     await leader.newPaxos();
     leader.findLeader(0);
   }
 }, 5000);
-*/
+
 app.get('/launch_election', (req, res) => {
   leader.leader = null;
   leader.findLeader(0);
@@ -62,8 +61,7 @@ const server = app
   .use((req, res) => res.sendFile('/', { root: __dirname }))
   .listen(PORT_WS, () => console.log(`listening on ${PORT_WS}.`));
 
-// const wsServers = new WebSocketServers(server, leader);
-new WebSocketServers(server, leader);
+export const wsServers = new WebSocketServers(server, leader);
 /*
 const wss = new WebSocketServer({ server });
 
