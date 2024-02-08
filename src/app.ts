@@ -1,6 +1,6 @@
 import express from 'express';
 import { Leader } from './leader.js';
-import { CONTAINER_NAME, NEIGHBORS, PORT_API, PORT_WS } from './helper.js';
+import { CONTAINER_NAME, NEIGHBORS, PORT_API, PORT_WS, randomIntFromInterval } from './helper.js';
 import { WebSocketServers } from './webSocketServer.js';
 
 const app = express();
@@ -13,12 +13,15 @@ app.get('/', (req, res) => {
   return res.send(`${CONTAINER_NAME} is awake\n`);
 });
 
-setInterval(async () => {
-  if (await leader.shouldLaunchLeaderSearch()) {
-    await leader.newPaxos();
-    leader.findLeader(0);
-  }
-}, 5000);
+setInterval(
+  async () => {
+    if (await leader.shouldLaunchLeaderSearch()) {
+      await leader.newPaxos();
+      leader.findLeader(0);
+    }
+  },
+  randomIntFromInterval(3500, 6500),
+);
 
 app.get('/launch_election', (req, res) => {
   leader.leader = null;
@@ -62,40 +65,9 @@ const server = app
   .listen(PORT_WS, () => console.log(`listening on ${PORT_WS}.`));
 
 export const wsServers = new WebSocketServers(server, leader);
-/*
-const wss = new WebSocketServer({ server });
 
-wss.on('connection', (ws) => {
-  console.log('Dashboard connected');
-
-  ws.on('close', () => console.log('Dashboard disconnected'));
-
-  ws.on('message', (message) => {
-    console.log(`${message}`);
-    if (message.toString() === 'status') {
-      console.log(`Received status check, measure ${leader.leader}`);
-      if (leader.leader === null) {
-        ws.send(`undefined`);
-      } else if (leader.leader === leader.me) {
-        ws.send(`me`);
-      } else {
-        ws.send(`defined`);
-      }
-    } else {
-      ws.send('uhhh...');
-    }
-  });
-});
-*/
 export default app;
 
 export const dummy = (a: number): number => {
   return a + 1;
 };
-
-/// const ws = new WebSocket("ws://localhost:4000")
-/// ws.onmessage = (evt) => {
-///   const received_msg = evt.data;
-///   console.log(`leader is ${evt.data}`);
-/// }
-/// ws.send('status');

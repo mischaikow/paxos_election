@@ -32,7 +32,7 @@ export class Leader {
 
   async isLeaderHealthy(): Promise<boolean> {
     if (this.leader === null) {
-      false;
+      return false;
     }
 
     try {
@@ -61,8 +61,8 @@ export class Leader {
     console.log(`Find Leader launched`);
     await sleep(msWait);
     await this.paxosElection.newElection(this);
+    this.searching = false;
     console.log(`Leader elected - ${this.leader}`);
     wsServers.leaderElected();
-    this.searching = false;
   }
 }

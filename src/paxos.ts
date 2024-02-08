@@ -22,16 +22,18 @@ export class Paxos {
   }
 
   async newElection(leader: Leader) {
+    console.log(`${this.me} launched an election`);
     while (!leader.leader) {
       await this.paxosProtocol();
-      await sleep(randomIntFromInterval(this.neighbors.length * 250, this.neighbors.length * 1000));
+      await sleep(randomIntFromInterval(this.neighbors.length * 150, this.neighbors.length * 500));
     }
   }
 
   async paxosProtocol() {
-    console.log('1 round of Paxos kicked off');
+    console.log(`1 round of Paxos kicked off - ${this.previousProposalNumber + 1}`);
     const ballot = await this.prepareBallot(this.previousProposalNumber + 1);
     if (ballot !== undefined) {
+      console.log(`Vote sent - ${ballot.proposalNumber} for ${ballot.leaderProposal}`);
       await this.sendBallot(ballot);
     }
   }
@@ -178,6 +180,7 @@ export class Paxos {
 
     if (this.paxosLedger[ballot.proposalNumber].voteCount > this.neighbors.length / 2) {
       leader.leader = ballot.leaderProposal;
+      console.log(`Leader elected - ${ballot.leaderProposal}`);
     }
 
     return true;
