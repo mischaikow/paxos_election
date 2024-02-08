@@ -1,7 +1,8 @@
-export const CONTAINER_NAME = process.env.CONTAINER_NAME ?? 'Unknown';
-export const NEIGHBORS = ['service3001', 'service3002', 'service3003', 'service3004', 'service3005'];
-export const PORT_API = 3000;
-export const PORT_WS = 4000;
+export const CONTAINER_NAME = Number(process.env.PORT) ?? 'Unknown';
+export const NEIGHBORS = [3001, 3002, 3003, 3004, 3005];
+export const PORT_API = Number(process.env.PORT) ?? 3000;
+export const PORT_WS = PORT_API + 1000;
+export const DOWNTIME = 7000;
 
 export const STANDING: {
   nack: 'nack';

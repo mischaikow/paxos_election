@@ -2,7 +2,7 @@
   "type": "module",
   "scripts": {
     "dev": "concurrently \"pnpm run watch-compile\" \"pnpm run cluster-dev\"",
-    "dev-local": "concurrently \"pnpm run watch-compile\" \"pnpm run watch-dev\"",
+    "dev-local": "sh ./localcluster.sh",
     "watch-compile": "swc src -w --out-dir dist",
     "cluster-dev": "sh ./clusterdev.sh",
     "docker-dev": "sh ./dockerdev.sh",

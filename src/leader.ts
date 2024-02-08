@@ -4,13 +4,13 @@ import { myFetch } from './myFetch.js';
 import { Paxos } from './paxos.js';
 
 export class Leader {
-  me: string;
-  leader: string | null;
-  neighbors: string[];
+  me: number;
+  leader: number | null;
+  neighbors: number[];
   searching: boolean;
   paxosElection: Paxos;
 
-  constructor(me: string, neighbors: string[]) {
+  constructor(me: number, neighbors: number[]) {
     this.me = me;
     this.leader = null;
     this.neighbors = neighbors;
@@ -36,7 +36,7 @@ export class Leader {
     }
 
     try {
-      await myFetch(`http://${this.leader}:3000/`, {
+      await myFetch(`http://localhost:${this.leader}/`, {
         retries: 3,
         retryDelay: 300,
         method: 'GET',

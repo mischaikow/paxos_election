@@ -1,32 +1,32 @@
 export interface LedgerEntry {
-  proposer: string;
+  proposer: number;
   proposalNumber: number;
   voteCount: number;
-  leaderProposal: string;
+  leaderProposal: number;
 }
 
 export interface PrepMessage {
-  proposer: string;
+  proposer: number;
   proposalNumber: number;
 }
 
 export interface Ballot {
-  proposer: string;
+  proposer: number;
   proposalNumber: number;
-  leaderProposal: string;
+  leaderProposal: number;
 }
 
 export interface VoteConfirm {
-  proposer: string;
+  proposer: number;
   proposalNumber: number;
-  leaderProposal: string;
-  voter: string;
+  leaderProposal: number;
+  voter: number;
 }
 
 export interface LivePromResponse {
   standing: 'promise' | 'nack';
   previousVotedNumber: number;
-  previousAcceptedValue: string | undefined;
+  previousAcceptedValue: number | undefined;
 }
 
 export interface DeadPromResponse {
