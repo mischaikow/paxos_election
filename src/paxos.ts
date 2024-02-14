@@ -59,6 +59,7 @@ export class Paxos {
           }
         } else if (response.value.standing === STANDING.nack) {
           this.previousProposalNumber = response.value.previousVotedNumber;
+          responseCounter = responseCounter - this.neighbors.length;
         }
       }
     }
