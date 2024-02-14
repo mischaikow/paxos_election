@@ -1,15 +1,16 @@
+import { wsServers } from './app.js';
 import { sleep } from './helper.js';
 import { myFetch } from './myFetch.js';
 import { Paxos } from './paxos.js';
 
 export class Leader {
-  me: string;
-  leader: string | null;
-  neighbors: string[];
+  me: number;
+  leader: number | null;
+  neighbors: number[];
   searching: boolean;
   paxosElection: Paxos;
 
-  constructor(me: string, neighbors: string[]) {
+  constructor(me: number, neighbors: number[]) {
     this.me = me;
     this.leader = null;
     this.neighbors = neighbors;
@@ -31,11 +32,11 @@ export class Leader {
 
   async isLeaderHealthy(): Promise<boolean> {
     if (this.leader === null) {
-      false;
+      return false;
     }
 
     try {
-      await myFetch(`http://${this.leader}:3000/`, {
+      await myFetch(`http://localhost:${this.leader}/`, {
         retries: 3,
         retryDelay: 300,
         method: 'GET',
@@ -43,6 +44,7 @@ export class Leader {
       return true;
     } catch (error) {
       console.log(`leader is unhealthy ${this.leader}`);
+      wsServers.leaderDown();
       this.leader = null;
       return false;
     }
@@ -59,7 +61,8 @@ export class Leader {
     console.log(`Find Leader launched`);
     await sleep(msWait);
     await this.paxosElection.newElection(this);
-    console.log(`Leader elected - ${this.leader}`);
     this.searching = false;
+    console.log(`Leader elected - ${this.leader}`);
+    wsServers.leaderElected();
   }
 }

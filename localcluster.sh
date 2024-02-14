@@ -1,0 +1,1 @@
+concurrently "pnpm run watch-compile" "PORT=3001 pnpm run watch-dev" "PORT=3002 pnpm run watch-dev" "PORT=3003 pnpm run watch-dev" "PORT=3004 pnpm run watch-dev" "PORT=3005 pnpm run watch-dev"

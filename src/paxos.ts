@@ -5,13 +5,13 @@ import { leader } from './app.js';
 import { myFetch } from './myFetch.js';
 
 export class Paxos {
-  me: string;
-  neighbors: string[];
-  previousProposer: string | null;
+  me: number;
+  neighbors: number[];
+  previousProposer: number | null;
   previousProposalNumber: number;
   paxosLedger: LedgerEntry[];
 
-  constructor(me: string, neighbors: string[]) {
+  constructor(me: number, neighbors: number[]) {
     this.me = me;
     this.neighbors = neighbors.filter((n) => {
       return n !== me;
@@ -22,16 +22,18 @@ export class Paxos {
   }
 
   async newElection(leader: Leader) {
+    console.log(`${this.me} launched an election`);
     while (!leader.leader) {
       await this.paxosProtocol();
-      await sleep(randomIntFromInterval(this.neighbors.length * 250, this.neighbors.length * 1000));
+      await sleep(randomIntFromInterval(this.neighbors.length * 150, this.neighbors.length * 500));
     }
   }
 
   async paxosProtocol() {
-    console.log('1 round of Paxos kicked off');
+    console.log(`${this.me} - ${this.previousProposalNumber + 1} round of Paxos kicked off`);
     const ballot = await this.prepareBallot(this.previousProposalNumber + 1);
     if (ballot !== undefined) {
+      console.log(`${this.me} - Vote sent - ${ballot.proposalNumber} for ${ballot.leaderProposal}`);
       await this.sendBallot(ballot);
     }
   }
@@ -57,6 +59,7 @@ export class Paxos {
           }
         } else if (response.value.standing === STANDING.nack) {
           this.previousProposalNumber = response.value.previousVotedNumber;
+          responseCounter = responseCounter - this.neighbors.length;
         }
       }
     }
@@ -70,14 +73,14 @@ export class Paxos {
     }
   }
 
-  async sendOnePrepareBallot(neighbor: string, proposalNumber: number): Promise<PromResponse> {
+  async sendOnePrepareBallot(neighbor: number, proposalNumber: number): Promise<PromResponse> {
     const body = {
       proposer: this.me,
       proposalNumber: proposalNumber,
     };
 
     try {
-      const response = await myFetch(`http://${neighbor}:3000/prepare_ballot`, {
+      const response = await myFetch(`http://localhost:${neighbor}/prepare_ballot`, {
         retries: 2,
         retryDelay: 250,
         method: 'POST',
@@ -86,7 +89,7 @@ export class Paxos {
       });
       return (await response.json()) as PromResponse;
     } catch (error) {
-      console.log(error);
+      console.log(`${this.me} - ballot prep to ${neighbor} failed`);
       return { standing: STANDING.failure };
     }
   }
@@ -112,7 +115,7 @@ export class Paxos {
   sendBallot(ballot: Ballot) {
     this.neighbors.map(async (neighbor) => {
       try {
-        await myFetch(`http://${neighbor}:3000/ballot_box`, {
+        await myFetch(`http://localhost:${neighbor}/ballot_box`, {
           retries: 2,
           retryDelay: 250,
           method: 'post',
@@ -120,7 +123,7 @@ export class Paxos {
           headers: { 'Content-Type': 'application/json' },
         });
       } catch (error) {
-        console.log(error);
+        console.log(`${this.me} - ballot ${neighbor} failed`);
       }
     });
 
@@ -147,7 +150,7 @@ export class Paxos {
   async sendVoteConfirms(ballot: Ballot) {
     this.neighbors.map(async (neighbor) => {
       try {
-        await myFetch(`http://${neighbor}:3000/vote_confirm`, {
+        await myFetch(`http://localhost:${neighbor}/vote_confirm`, {
           retries: 2,
           retryDelay: 250,
           method: 'post',
@@ -161,6 +164,7 @@ export class Paxos {
   }
 
   voteReceipt(ballot: Ballot) {
+    console.log(`${this.me} - got votes`);
     if (!this.paxosLedger[ballot.proposalNumber]) {
       this.paxosLedger[ballot.proposalNumber] = {
         proposer: ballot.proposer,
@@ -178,6 +182,7 @@ export class Paxos {
 
     if (this.paxosLedger[ballot.proposalNumber].voteCount > this.neighbors.length / 2) {
       leader.leader = ballot.leaderProposal;
+      console.log(`Leader elected - ${ballot.leaderProposal}`);
     }
 
     return true;
