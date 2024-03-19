@@ -63,6 +63,6 @@ export class Leader {
     await this.paxosElection.newElection(this);
     this.searching = false;
     console.log(`Leader elected - ${this.leader}`);
-    wsServers.leaderElected();
+    wsServers.whoIsLeaderElected();
   }
 }

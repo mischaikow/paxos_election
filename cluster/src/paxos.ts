@@ -34,7 +34,7 @@ export class Paxos {
     const ballot = await this.prepareBallot(this.previousProposalNumber + 1);
     if (ballot !== undefined) {
       console.log(`${this.me} - Vote sent - ${ballot.proposalNumber} for ${ballot.leaderProposal}`);
-      await this.sendBallot(ballot);
+      this.sendBallot(ballot);
     }
   }
 
@@ -90,7 +90,7 @@ export class Paxos {
       return (await response.json()) as PromResponse;
     } catch (error) {
       console.log(`${this.me} - ballot prep to ${neighbor} failed`);
-      return { standing: STANDING.failure };
+      return { standing: 'failure' };
     }
   }
 
@@ -112,7 +112,7 @@ export class Paxos {
     }
   }
 
-  sendBallot(ballot: Ballot) {
+  sendBallot(ballot: Ballot): void {
     this.neighbors.map(async (neighbor) => {
       try {
         await myFetch(`http://localhost:${neighbor}/ballot_box`, {
@@ -158,7 +158,7 @@ export class Paxos {
           headers: { 'Content-Type': 'application/json' },
         });
       } catch (error) {
-        console.log(error);
+        console.log(`Unable to send voteConfirm to ${neighbor}`);
       }
     });
   }

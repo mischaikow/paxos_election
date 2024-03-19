@@ -26,3 +26,4 @@ However the code base still has a lot of loose strings, abandonded threads, and 
 - **Abstract and generlize the node count** To get this across the finish line, I hard-coded the number and names of the nodes. I would like to abstract this so that users can decide how many nodes there are.
 - **Set up some illustrative tests** This should allow users to more easily understand what individual functions are doing, and make it easier to safely make changes to the codebase.
 - **Add presentation slides (with notes!)** I gave a one-hour presentation at the [Recurse Center](https://www.recurse.com), and the slides can help understand what this code does.
+- **Drop fetchRetry** This was added because of issues with inter-container communication when running on a local Docker daemon. It's no longer necessary and should be discarded.

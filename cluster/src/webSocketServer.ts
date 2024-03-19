@@ -2,7 +2,7 @@ import { WebSocket, WebSocketServer } from 'ws';
 import { Leader } from './leader.js';
 import { Server } from 'http';
 import { goDark } from './server.js';
-import { DOWNTIME } from './helper.js';
+import { assert } from './helper.js';
 
 export class WebSocketServers {
   wss: WebSocketServer;
@@ -22,22 +22,22 @@ export class WebSocketServers {
 
       ws.on('close', () => console.log('Dashboard disconnected'));
 
-      ws.on('message', (message: string) => {
+      ws.on('message', async (message: string) => {
         if (this.isDark) {
+          //assert(this.doIHaveALeader(), 'Should not have a leader');
           ws.send('dead');
         } else {
           switch (message.toString()) {
             case 'status':
               // console.log(`Received status check, leader is ${leader.leader}`);
-              this.leaderElected();
+              this.whoIsLeaderElected();
               break;
             case 'pause':
               console.log(`Going dark`);
               this.isDark = true;
-              goDark();
-              setTimeout(() => {
-                this.isDark = false;
-              }, DOWNTIME);
+              await goDark();
+              this.isDark = false;
+              console.log(`back online`);
               this.leader.leader = null;
               break;
             default:
@@ -52,12 +52,16 @@ export class WebSocketServers {
     this.broadcast('lost');
   }
 
-  leaderElected() {
+  whoIsLeaderElected() {
     if (this.leader.leader === null) {
       this.broadcast(`lost`);
     } else {
       this.broadcast(`leader - ${this.leader.leader}`);
     }
+  }
+
+  doIHaveALeader() {
+    return this.leader.leader !== null;
   }
 
   broadcast(message: string) {
