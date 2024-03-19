@@ -2,7 +2,6 @@ import { WebSocket, WebSocketServer } from 'ws';
 import { Leader } from './leader.js';
 import { Server } from 'http';
 import { goDark } from './server.js';
-import { assert } from './helper.js';
 
 export class WebSocketServers {
   wss: WebSocketServer;
@@ -24,12 +23,10 @@ export class WebSocketServers {
 
       ws.on('message', async (message: string) => {
         if (this.isDark) {
-          //assert(this.doIHaveALeader(), 'Should not have a leader');
           ws.send('dead');
         } else {
           switch (message.toString()) {
             case 'status':
-              // console.log(`Received status check, leader is ${leader.leader}`);
               this.whoIsLeaderElected();
               break;
             case 'pause':

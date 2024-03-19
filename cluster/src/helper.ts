@@ -1,4 +1,4 @@
-export const CONTAINER_NAME = Number(process.env.PORT) ?? 'Unknown';
+export const CONTAINER_NAME = Number(process.env.PORT);
 export const NEIGHBORS = [3001, 3002, 3003, 3004, 3005];
 export const PORT_API = Number(process.env.PORT) ?? 3000;
 export const PORT_WS = PORT_API + 1000;
