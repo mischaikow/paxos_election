@@ -22,7 +22,6 @@ This should launch the 5 servers and they should communicate with each other unt
 The Paxos algorithm works.
 However the code base still has a lot of loose strings, abandonded threads, and potential implementations.
 
-- **Remove all the Docker components** I originally intended to run each node in its own Docker container, but this proved too cumbersome.
 - **Remove or fix the websocket code** For demo purposes, having working websockets would be nice to allow users to more easily follow the nodes selecting their leader.
 - **Abstract and generlize the node count** To get this across the finish line, I hard-coded the number and names of the nodes. I would like to abstract this so that users can decide how many nodes there are.
 - **Set up some illustrative tests** This should allow users to more easily understand what individual functions are doing, and make it easier to safely make changes to the codebase.

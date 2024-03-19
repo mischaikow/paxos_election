@@ -1,17 +1,12 @@
 {
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"pnpm run watch-compile\" \"pnpm run cluster-dev\"",
-    "dev-local": "sh ./localcluster.sh",
+    "dev": "sh ./localcluster.sh",
     "watch-compile": "swc src -w --out-dir dist",
-    "cluster-dev": "sh ./clusterdev.sh",
-    "docker-dev": "sh ./dockerdev.sh",
     "watch-dev": "nodemon -L --watch \"dist/**/*\" -e js ./dist/server.js",
-    "watch-dev-local": "nodemon --watch \"dist/**/*\" -e js ./dist/server.js",
     "build": "swc src -d dist",
     "start": "NODE_ENV=production node dist/server.js",
-    "test": "docker build -t vitest -f Dockerfile.test . && docker run --rm vitest",
-    "test-local": "pnpm build && vitest",
+    "test": "pnpm build && vitest",
     "coverage": "pnpm build && vitest run --coverage"
   },
   "dependencies": {
