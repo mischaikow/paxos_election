@@ -1,7 +1,5 @@
-export const CONTAINER_NAME = Number(process.env.PORT);
-export const NEIGHBORS = [3001, 3002, 3003, 3004, 3005];
-export const PORT_API = Number(process.env.PORT) ?? 3000;
-export const PORT_WS = PORT_API + 1000;
+import { ClusterState } from './helper.types.js';
+
 export const DOWNTIME = 7000;
 
 export const STANDING: {
@@ -13,6 +11,38 @@ export const STANDING: {
   promise: 'promise',
   failure: 'failure',
 };
+
+export function stateSetup(nodeState: string | undefined): ClusterState {
+  if (nodeState === 'child') {
+    // call parent for neighbors.
+    const portApi = Number(process.argv[2]);
+    const portWs = portApi + 1000;
+    console.log(portApi, portWs);
+    console.log(process.argv[0]);
+    console.log(process.argv[1]);
+    console.log(process.argv[2]);
+    return {
+      containerName: portApi,
+      neighbors: [portApi],
+      portApi: portApi,
+      portWs: portWs,
+    };
+  }
+  const portApi = Number(process.env.PORT) ?? 3001;
+  const portWs = portApi + 1000;
+  return {
+    containerName: Number(process.env.PORT),
+    neighbors: [3001, 3002, 3003, 3004, 3005],
+    portApi: Number(process.env.PORT) ?? 3001,
+    portWs: portWs,
+  };
+}
+
+export function launchChildEnv() {
+  // This expects inputs to be in the order
+  // . name
+  return process.argv[2];
+}
 
 export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => {

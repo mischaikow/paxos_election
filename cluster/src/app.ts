@@ -1,16 +1,19 @@
 import express from 'express';
 import { Leader } from './leader.js';
-import { CONTAINER_NAME, NEIGHBORS, PORT_API, PORT_WS, randomIntFromInterval } from './helper.js';
+import { stateSetup, randomIntFromInterval } from './helper.js';
 import { WebSocketServers } from './webSocketServer.js';
 
 const app = express();
-export const leader = new Leader(CONTAINER_NAME, NEIGHBORS);
+
+export const clusterState = stateSetup(process.env.NODE_STATE);
+
+export const leader = new Leader(clusterState.containerName, clusterState.neighbors);
 
 app.use(express.json());
-app.set('port', PORT_API);
+app.set('port', clusterState.portApi);
 
 app.get('/', (req, res) => {
-  return res.send(`${CONTAINER_NAME} is awake\n`);
+  return res.send(`${clusterState.containerName} is awake\n`);
 });
 
 setInterval(
@@ -62,7 +65,7 @@ app.post('/vote_confirm', async (req) => {
 
 const server = app
   .use((req, res) => res.sendFile('/', { root: __dirname }))
-  .listen(PORT_WS, () => console.log(`listening on ${PORT_WS}.`));
+  .listen(clusterState.portWs, () => console.log(`listening on ${clusterState.portWs}.`));
 
 export const wsServers = new WebSocketServers(server, leader);
 
