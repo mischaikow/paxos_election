@@ -1,9 +1,10 @@
 import express from 'express';
 import { buildPaxos } from './manager.js';
-import { addChild } from './helper.js';
+import { AllChildState, ChildState } from './manager.types.js';
+import { Children } from './children.js';
 
 const app = express();
-const children: string[] = [];
+const children = new Children();
 
 app.use(express.json());
 
@@ -13,14 +14,14 @@ app.get('/', (req, res) => {
   return res.send('Paxos Manager Running\n');
 });
 
-app.get('/new_node', (req, res) => {
-  const nextBuildName = addChild(children);
-  buildPaxos(nextBuildName);
-  return res.send('New node launched?\n');
+app.get('/new_node', async (req, res) => {
+  const newChild = children.addChild();
+  await buildPaxos(children, newChild);
+  return res.send(`New node launched: ${newChild.nodeName}\n`);
 });
 
 app.get('/node_list', (req, res) => {
-  return res.send(children);
+  return res.send(children.listChildren());
 });
 
 export const dummy = (a: number): number => {

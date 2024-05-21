@@ -1,21 +1,38 @@
-import { spawn } from 'child_process';
-import { CLUSTER_REL_FILENAME } from './helper.js';
+import { fork } from 'child_process';
+import { CLUSTER_REL_FILENAME, MSG_REQ_NEIGHBORS } from './helper.js';
+import { ChildState, ParentChildMessage } from './manager.types.js';
+import { Children } from './children.js';
 
-export async function buildPaxos(nodeName: string): Promise<void> {
-  console.log(`going to build ${nodeName}`);
-  const buildProcess = spawn('pnpm', ['run child', nodeName], {
+export async function buildPaxos(children: Children, child: ChildState) {
+  if (child.connection !== null) {
+    throw new Error('Tried to build a child that already exists!');
+  }
+  console.log(`Going to build ${child.nodeName}`);
+  child.connection = fork('dist/server.js', [String(child.nodeName), String(child.portApi), String(child.portWs)], {
     cwd: CLUSTER_REL_FILENAME,
     stdio: 'inherit',
-    shell: true,
+    env: {
+      ...process.env,
+      NODE_ENV: 'production',
+      NODE_STATE: 'child',
+    },
   });
 
-  buildProcess.on('message', (msg) => {
-    console.log(`child ${nodeName} says: ${msg}`);
+  // TODO: add ability for a node to request a new port
+  // this is why we feed children into this function.
+  child.connection.on('message', (msg) => {
+    if (msg === MSG_REQ_NEIGHBORS) {
+      const response: ParentChildMessage = {
+        signal: MSG_REQ_NEIGHBORS,
+        data: children.listNeighbors(),
+      };
+      child.connection?.send(response);
+    } else {
+      console.log(`child ${child.nodeName} says: ${msg}`);
+    }
   });
 
-  buildProcess.on('error', (err) => {
-    console.log(`child ${nodeName} errors: ${err}`);
+  child.connection.on('error', (err) => {
+    console.log(`child ${child.nodeName} errors: ${err}`);
   });
-
-  return;
 }

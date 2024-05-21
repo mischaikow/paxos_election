@@ -1,19 +1,21 @@
 import express from 'express';
 import { Leader } from './leader.js';
-import { stateSetup, randomIntFromInterval } from './helper.js';
+import { stateSetup, randomIntFromInterval, MSG_REQ_NEIGHBORS } from './helper.js';
 import { WebSocketServers } from './webSocketServer.js';
+import { ParentChildMessage } from './helper.types.js';
 
 const app = express();
 
-export const clusterState = stateSetup(process.env.NODE_STATE);
+// TODO: Separate name from port number.
+export const nodeState = stateSetup(process.env.NODE_STATE);
 
-export const leader = new Leader(clusterState.containerName, clusterState.neighbors);
+export const leader = new Leader(nodeState.nodeName, nodeState.neighbors);
 
 app.use(express.json());
-app.set('port', clusterState.portApi);
+app.set('port', nodeState.portApi);
 
 app.get('/', (req, res) => {
-  return res.send(`${clusterState.containerName} is awake\n`);
+  return res.send(`${nodeState.nodeName} is awake and ${typeof process.send} is valid!\n`);
 });
 
 setInterval(
@@ -65,7 +67,19 @@ app.post('/vote_confirm', async (req) => {
 
 const server = app
   .use((req, res) => res.sendFile('/', { root: __dirname }))
-  .listen(clusterState.portWs, () => console.log(`listening on ${clusterState.portWs}.`));
+  .listen(nodeState.portWs, () => console.log(`listening on ${nodeState.portWs}.`));
+
+// The parent-child communciation channel:
+process.on('message', (msg: ParentChildMessage) => {
+  console.log(msg.signal);
+  if (msg.signal === MSG_REQ_NEIGHBORS) {
+    console.log('I understood this!');
+  }
+});
+
+process.stdin.on('data', (data) => {
+  console.log(`Parent data ${JSON.stringify(data)}`);
+});
 
 export const wsServers = new WebSocketServers(server, leader);
 

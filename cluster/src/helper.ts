@@ -1,6 +1,7 @@
-import { ClusterState } from './helper.types.js';
+import { ChildData, NodeState } from './helper.types.js';
 
 export const DOWNTIME = 7000;
+export const MSG_REQ_NEIGHBORS = 'child-request-neighbors';
 
 export const STANDING: {
   nack: 'nack';
@@ -12,36 +13,43 @@ export const STANDING: {
   failure: 'failure',
 };
 
-export function stateSetup(nodeState: string | undefined): ClusterState {
+export function stateSetup(nodeState: string | undefined): NodeState {
   if (nodeState === 'child') {
-    // call parent for neighbors.
-    const portApi = Number(process.argv[2]);
-    const portWs = portApi + 1000;
-    console.log(portApi, portWs);
-    console.log(process.argv[0]);
-    console.log(process.argv[1]);
-    console.log(process.argv[2]);
+    console.log(process.argv);
+    const nodeName = Number(process.argv[2]);
+    const portApi = Number(process.argv[3]);
+    const portWs = Number(process.argv[4]);
+    // TODO ask the parent for a list of neighbors
+    if (process.send) {
+      process.send(MSG_REQ_NEIGHBORS);
+    } else {
+      // throw error
+    }
+    const neighbors: ChildData[] = [];
+    console.log(`New child ${nodeName} with API ${portApi} and WSS ${portWs}`);
     return {
-      containerName: portApi,
-      neighbors: [portApi],
+      nodeName: nodeName,
+      neighbors: neighbors,
       portApi: portApi,
       portWs: portWs,
     };
   }
+
+  // Not a child process.
   const portApi = Number(process.env.PORT) ?? 3001;
   const portWs = portApi + 1000;
   return {
-    containerName: Number(process.env.PORT),
-    neighbors: [3001, 3002, 3003, 3004, 3005],
-    portApi: Number(process.env.PORT) ?? 3001,
+    nodeName: portApi,
+    neighbors: [
+      { nodeName: 1001, portApi: 3001, portWs: 4001 },
+      { nodeName: 1002, portApi: 3002, portWs: 4002 },
+      { nodeName: 1003, portApi: 3003, portWs: 4003 },
+      { nodeName: 1004, portApi: 3004, portWs: 4004 },
+      { nodeName: 1005, portApi: 3005, portWs: 4005 },
+    ],
+    portApi: portApi,
     portWs: portWs,
   };
-}
-
-export function launchChildEnv() {
-  // This expects inputs to be in the order
-  // . name
-  return process.argv[2];
 }
 
 export function sleep(ms: number): Promise<void> {

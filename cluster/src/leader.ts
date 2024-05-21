@@ -1,21 +1,24 @@
 import { wsServers } from './app.js';
 import { sleep } from './helper.js';
+import { ChildData } from './helper.types.js';
 import { myFetch } from './myFetch.js';
 import { Paxos } from './paxos.js';
 
 export class Leader {
   me: number;
   leader: number | null;
-  neighbors: number[];
+  neighbors: ChildData[];
+  neighborApis: number[];
   searching: boolean;
   paxosElection: Paxos;
 
-  constructor(me: number, neighbors: number[]) {
+  constructor(me: number, neighbors: ChildData[]) {
     this.me = me;
     this.leader = null;
     this.neighbors = neighbors;
+    this.neighborApis = neighbors.map((a) => a.portApi);
     this.searching = false;
-    this.paxosElection = new Paxos(this.me, this.neighbors);
+    this.paxosElection = new Paxos(this.me, this.neighborApis);
   }
 
   async shouldLaunchLeaderSearch(): Promise<boolean> {
@@ -53,7 +56,7 @@ export class Leader {
   async newPaxos(): Promise<boolean> {
     this.searching = true;
     this.leader = null;
-    this.paxosElection = await new Paxos(this.me, this.neighbors);
+    this.paxosElection = await new Paxos(this.me, this.neighborApis);
     return true;
   }
 

@@ -12,6 +12,7 @@ export async function goDark() {
   server.close(() => {
     console.log('disconnected');
   });
+  // TODO: get new port number from the leader.
   await sleep(DOWNTIME);
   app.listen(app.get('port'), () => {
     console.log('back online');
