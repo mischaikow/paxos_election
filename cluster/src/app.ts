@@ -2,20 +2,22 @@ import express from 'express';
 import { Leader } from './leader.js';
 import { stateSetup, randomIntFromInterval, MSG_REQ_NEIGHBORS } from './helper.js';
 import { WebSocketServers } from './webSocketServer.js';
-import { ParentChildMessage } from './helper.types.js';
+import { ChildData, ParentChildMessage } from './helper.types.js';
 
 const app = express();
 
 // TODO: Separate name from port number.
 export const nodeState = stateSetup(process.env.NODE_STATE);
 
-export const leader = new Leader(nodeState.nodeName, nodeState.neighbors);
+export const leader = new Leader(nodeState, nodeState.neighbors);
 
 app.use(express.json());
 app.set('port', nodeState.portApi);
 
 app.get('/', (req, res) => {
-  return res.send(`${nodeState.nodeName} is awake and ${typeof process.send} is valid!\n`);
+  const answer = `${nodeState.nodeName} is awake and ${leader.leader
+    ?.nodeName} is currently my leader.\n${JSON.stringify(leader.neighbors)}`;
+  return res.send(answer);
 });
 
 setInterval(
@@ -71,9 +73,8 @@ const server = app
 
 // The parent-child communciation channel:
 process.on('message', (msg: ParentChildMessage) => {
-  console.log(msg.signal);
   if (msg.signal === MSG_REQ_NEIGHBORS) {
-    console.log('I understood this!');
+    leader.assignNeighbors(msg.data as ChildData[]);
   }
 });
 

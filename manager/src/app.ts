@@ -1,6 +1,5 @@
 import express from 'express';
-import { buildPaxos } from './manager.js';
-import { AllChildState, ChildState } from './manager.types.js';
+import { buildChildNode } from './manager.js';
 import { Children } from './children.js';
 
 const app = express();
@@ -16,7 +15,8 @@ app.get('/', (req, res) => {
 
 app.get('/new_node', async (req, res) => {
   const newChild = children.addChild();
-  await buildPaxos(children, newChild);
+  await buildChildNode(children, newChild);
+  children.broadcastNeighbors();
   return res.send(`New node launched: ${newChild.nodeName}\n`);
 });
 

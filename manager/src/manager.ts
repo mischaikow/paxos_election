@@ -3,7 +3,7 @@ import { CLUSTER_REL_FILENAME, MSG_REQ_NEIGHBORS } from './helper.js';
 import { ChildState, ParentChildMessage } from './manager.types.js';
 import { Children } from './children.js';
 
-export async function buildPaxos(children: Children, child: ChildState) {
+export async function buildChildNode(children: Children, child: ChildState) {
   if (child.connection !== null) {
     throw new Error('Tried to build a child that already exists!');
   }
@@ -22,11 +22,7 @@ export async function buildPaxos(children: Children, child: ChildState) {
   // this is why we feed children into this function.
   child.connection.on('message', (msg) => {
     if (msg === MSG_REQ_NEIGHBORS) {
-      const response: ParentChildMessage = {
-        signal: MSG_REQ_NEIGHBORS,
-        data: children.listNeighbors(),
-      };
-      child.connection?.send(response);
+      child.connection?.send(children.neighborListMessage());
     } else {
       console.log(`child ${child.nodeName} says: ${msg}`);
     }

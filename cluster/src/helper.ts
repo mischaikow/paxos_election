@@ -15,11 +15,9 @@ export const STANDING: {
 
 export function stateSetup(nodeState: string | undefined): NodeState {
   if (nodeState === 'child') {
-    console.log(process.argv);
     const nodeName = Number(process.argv[2]);
     const portApi = Number(process.argv[3]);
     const portWs = Number(process.argv[4]);
-    // TODO ask the parent for a list of neighbors
     if (process.send) {
       process.send(MSG_REQ_NEIGHBORS);
     } else {
@@ -37,9 +35,10 @@ export function stateSetup(nodeState: string | undefined): NodeState {
 
   // Not a child process.
   const portApi = Number(process.env.PORT) ?? 3001;
+  const nodeName = portApi - 2000;
   const portWs = portApi + 1000;
   return {
-    nodeName: portApi,
+    nodeName: nodeName,
     neighbors: [
       { nodeName: 1001, portApi: 3001, portWs: 4001 },
       { nodeName: 1002, portApi: 3002, portWs: 4002 },

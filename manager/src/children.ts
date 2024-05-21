@@ -1,4 +1,5 @@
-import { AllChildState, ChildState } from './manager.types.js';
+import { MSG_REQ_NEIGHBORS } from './helper.js';
+import { AllChildState, ChildData, ChildState, ParentChildMessage } from './manager.types.js';
 
 export class Children {
   children: AllChildState;
@@ -44,13 +45,32 @@ export class Children {
     return ans;
   }
 
-  listNeighbors(): ChildState[] {
-    const ans = [];
+  listNeighbors(): ChildData[] {
+    const ans: ChildData[] = [];
     for (const [childName, child] of Object.entries(this.children)) {
       if (child.connection !== null) {
-        ans.push(child);
+        ans.push({
+          nodeName: child.nodeName,
+          portApi: child.portApi,
+          portWs: child.portWs,
+        });
       }
     }
     return ans;
+  }
+
+  neighborListMessage(): ParentChildMessage {
+    return {
+      signal: MSG_REQ_NEIGHBORS,
+      data: this.listNeighbors(),
+    };
+  }
+
+  broadcastNeighbors() {
+    for (const [childName, child] of Object.entries(this.children)) {
+      if (child.connection !== null) {
+        child.connection.send(this.neighborListMessage());
+      }
+    }
   }
 }
