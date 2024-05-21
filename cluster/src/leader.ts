@@ -1,21 +1,23 @@
 import { wsServers } from './app.js';
 import { sleep } from './helper.js';
+import { ChildData } from './helper.types.js';
 import { myFetch } from './myFetch.js';
 import { Paxos } from './paxos.js';
 
 export class Leader {
-  me: number;
-  leader: number | null;
-  neighbors: number[];
+  me: ChildData;
+  leader: ChildData | null;
+  neighbors: ChildData[];
   searching: boolean;
   paxosElection: Paxos;
 
-  constructor(me: number, neighbors: number[]) {
+  constructor(me: ChildData, neighbors: ChildData[]) {
     this.me = me;
     this.leader = null;
     this.neighbors = neighbors;
     this.searching = false;
-    this.paxosElection = new Paxos(this.me, this.neighbors);
+    const neighborApis = neighbors.map((a) => a.portApi);
+    this.paxosElection = new Paxos(this.me, neighborApis);
   }
 
   async shouldLaunchLeaderSearch(): Promise<boolean> {
@@ -36,14 +38,14 @@ export class Leader {
     }
 
     try {
-      await myFetch(`http://localhost:${this.leader}/`, {
+      await myFetch(`http://localhost:${this.leader.portApi}/`, {
         retries: 3,
         retryDelay: 300,
         method: 'GET',
       });
       return true;
     } catch (error) {
-      console.log(`leader is unhealthy ${this.leader}`);
+      console.log(`leader is unhealthy ${this.leader.nodeName}`);
       wsServers.leaderDown();
       this.leader = null;
       return false;
@@ -53,7 +55,8 @@ export class Leader {
   async newPaxos(): Promise<boolean> {
     this.searching = true;
     this.leader = null;
-    this.paxosElection = await new Paxos(this.me, this.neighbors);
+    const neighborApis = this.neighbors.map((a) => a.portApi);
+    this.paxosElection = await new Paxos(this.me, neighborApis);
     return true;
   }
 
@@ -62,7 +65,19 @@ export class Leader {
     await sleep(msWait);
     await this.paxosElection.newElection(this);
     this.searching = false;
-    console.log(`Leader elected - ${this.leader}`);
+    console.log(`Leader elected - ${this.leader?.nodeName}`);
     wsServers.whoIsLeaderElected();
+  }
+
+  assignLeader(leaderApi: number) {
+    for (const aNeighbor of this.neighbors) {
+      if (aNeighbor.portApi === leaderApi) {
+        this.leader = aNeighbor;
+      }
+    }
+  }
+
+  assignNeighbors(neighbors: ChildData[]) {
+    this.neighbors = neighbors;
   }
 }

@@ -1,8 +1,7 @@
-export const CONTAINER_NAME = Number(process.env.PORT);
-export const NEIGHBORS = [3001, 3002, 3003, 3004, 3005];
-export const PORT_API = Number(process.env.PORT) ?? 3000;
-export const PORT_WS = PORT_API + 1000;
+import { ChildData, NodeState } from './helper.types.js';
+
 export const DOWNTIME = 7000;
+export const MSG_REQ_NEIGHBORS = 'child-request-neighbors';
 
 export const STANDING: {
   nack: 'nack';
@@ -13,6 +12,44 @@ export const STANDING: {
   promise: 'promise',
   failure: 'failure',
 };
+
+export function stateSetup(nodeState: string | undefined): NodeState {
+  if (nodeState === 'child') {
+    const nodeName = Number(process.argv[2]);
+    const portApi = Number(process.argv[3]);
+    const portWs = Number(process.argv[4]);
+    if (process.send) {
+      process.send(MSG_REQ_NEIGHBORS);
+    } else {
+      // throw error
+    }
+    const neighbors: ChildData[] = [];
+    console.log(`New child ${nodeName} with API ${portApi} and WSS ${portWs}`);
+    return {
+      nodeName: nodeName,
+      neighbors: neighbors,
+      portApi: portApi,
+      portWs: portWs,
+    };
+  }
+
+  // Not a child process.
+  const portApi = Number(process.env.PORT) ?? 3001;
+  const nodeName = portApi - 2000;
+  const portWs = portApi + 1000;
+  return {
+    nodeName: nodeName,
+    neighbors: [
+      { nodeName: 1001, portApi: 3001, portWs: 4001 },
+      { nodeName: 1002, portApi: 3002, portWs: 4002 },
+      { nodeName: 1003, portApi: 3003, portWs: 4003 },
+      { nodeName: 1004, portApi: 3004, portWs: 4004 },
+      { nodeName: 1005, portApi: 3005, portWs: 4005 },
+    ],
+    portApi: portApi,
+    portWs: portWs,
+  };
+}
 
 export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => {

@@ -1,21 +1,20 @@
 {
   "type": "module",
   "scripts": {
-    "dev": "sh ./localcluster.sh",
+    "dev": "concurrently \"pnpm run watch-compile\" \"pnpm run watch-dev\"",
+    "docker-dev": "concurrently \"pnpm run watch-compile\" \"pnpm run docker-watch-dev\"",
     "watch-compile": "swc src -w --out-dir dist",
     "watch-dev": "nodemon -L --watch \"dist/**/*\" -e js ./dist/server.js",
+    "docker-watch-dev": "sh ./dockerdev.sh",
     "build": "swc src -d dist",
     "start": "NODE_ENV=production node dist/server.js",
-    "test": "pnpm build && vitest",
-    "coverage": "pnpm build && vitest run --coverage",
-    "child": "NODE_ENV=production NODE_STATE=child node dist/server.js"
+    "test-docker": "docker build -t vitest -f Dockerfile.test . && docker run --rm vitest",
+    "test-local": "pnpm build && vitest",
+    "coverage": "pnpm build && vitest run --coverage"
   },
   "dependencies": {
-    "express": "^4.18.2",
-    "fetch-retry": "^5.0.6",
-    "node-cron": "^3.0.3",
-    "node-fetch": "^3.3.2",
-    "ws": "^8.16.0"
+    "child_process": "^1.0.2",
+    "express": "^4.18.2"
   },
   "devDependencies": {
     "@swc/cli": "^0.1.63",
@@ -23,16 +22,14 @@
     "@tsconfig/node20": "^20.1.2",
     "@types/express": "^4.17.21",
     "@types/node": "^20.10.7",
-    "@types/node-cron": "^3.0.11",
-    "@types/node-fetch": "^2.6.11",
-    "@types/ws": "^8.5.10",
     "@typescript-eslint/eslint-plugin": "^6.18.1",
     "@typescript-eslint/parser": "^6.18.1",
+    "@vitest/coverage-v8": "^1.2.2",
     "chokidar": "^3.5.3",
     "concurrently": "^8.2.2",
     "eslint": "^8.56.0",
     "eslint-config-prettier": "^9.1.0",
-    "nodemon": "^3.0.2",
+    "nodemon": "^3.0.3",
     "prettier": "^3.1.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3",

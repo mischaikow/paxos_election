@@ -3,5 +3,5 @@ import { testMe, testNeighbors } from './testVariables.js';
 
 test('does Paxos work', () => {
   const p = new Paxos(testMe, testNeighbors);
-  expect(p.me).toBe(testMe);
+  expect(p.meApi).toBe(testMe);
 });
