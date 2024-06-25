@@ -3,12 +3,14 @@ import { AllChildState, ChildState } from './manager.types.js';
 
 export const CLUSTER_REL_FILENAME = path.resolve('../cluster');
 export const MSG_REQ_NEIGHBORS = 'child-request-neighbors';
+export const MSG_REQ_NEW_API = 'child-request-new-api';
 let lastValue = 3000;
 
+/*
 // When adding a new child, we need to make sure the name is unused
 // TODO: add a check to make sure the port is available
 // TODO: replace childrenNames with children
-export function nextAPIPort(children: string[]): string {
+export function nextAPIPort(children: Children): string {
   if (children.length === 0) {
     lastValue++;
     children.push(String(lastValue));
@@ -33,3 +35,4 @@ export function findWSS(childrenWSSPorts: Set<number>): number {
   }
   return nextWSS;
 }
+*/

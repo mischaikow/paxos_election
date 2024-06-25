@@ -24,6 +24,12 @@ export class Paxos {
     this.paxosLedger = [];
   }
 
+  assignNeighborApis(neighbors: number[]) {
+    this.neighborApis = neighbors.filter((n) => {
+      return n !== this.meApi;
+    });
+  }
+
   async newElection(leader: Leader) {
     console.log(`${this.me.nodeName} launched an election`);
     while (!leader.leader) {

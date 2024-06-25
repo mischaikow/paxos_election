@@ -1,22 +1,24 @@
 import express from 'express';
 import { Leader } from './leader.js';
-import { stateSetup, randomIntFromInterval, MSG_REQ_NEIGHBORS } from './helper.js';
+import { stateSetup, randomIntFromInterval, MSG_REQ_NEIGHBORS, MSG_REQ_NEW_API } from './helper.js';
 import { WebSocketServers } from './webSocketServer.js';
-import { ChildData, ParentChildMessage } from './helper.types.js';
+import { ParentChildMessage } from './helper.types.js';
 
 const app = express();
 
-// TODO: Separate name from port number.
-export const nodeState = stateSetup(process.env.NODE_STATE);
+export function setPort(portApi: number) {
+  app.set('port', portApi);
+}
 
-export const leader = new Leader(nodeState, nodeState.neighbors);
+export const leader = new Leader(stateSetup(process.env.NODE_STATE));
 
 app.use(express.json());
-app.set('port', nodeState.portApi);
 
 app.get('/', (req, res) => {
-  const answer = `${nodeState.nodeName} is awake and ${leader.leader
-    ?.nodeName} is currently my leader.\n${JSON.stringify(leader.neighbors)}`;
+  const answer = `${leader.me.nodeName} is awake and ${leader.leader
+    ?.nodeName} is currently my leader.\n\n${JSON.stringify(leader.neighbors)}\n\nI am communication through API ${
+    leader.me.portApi
+  } and WS ${leader.me.portWs}`;
   return res.send(answer);
 });
 
@@ -47,7 +49,6 @@ app.post('/prepare_ballot', async (req, res) => {
     await leader.newPaxos();
     leader.findLeader(250);
   }
-  console.log(req.body);
   return res.json(leader.paxosElection.promiseResponse(req.body));
 });
 
@@ -69,18 +70,26 @@ app.post('/vote_confirm', async (req) => {
 
 const server = app
   .use((req, res) => res.sendFile('/', { root: __dirname }))
-  .listen(nodeState.portWs, () => console.log(`listening on ${nodeState.portWs}.`));
+  .listen(leader.me.portWs, () => console.log(`listening on ${leader.me.portWs}.`));
 
 // The parent-child communciation channel:
 process.on('message', (msg: ParentChildMessage) => {
   if (msg.signal === MSG_REQ_NEIGHBORS) {
-    leader.assignNeighbors(msg.data as ChildData[]);
+    leader.assignNeighbors(msg.data);
+  } else if (msg.signal === MSG_REQ_NEW_API) {
+    leader.changePortApi(msg.data[0].newPort);
   }
 });
 
 process.stdin.on('data', (data) => {
   console.log(`Parent data ${JSON.stringify(data)}`);
 });
+
+export function getNewAPIPortNumber() {
+  if (process.send) {
+    process.send(MSG_REQ_NEW_API);
+  }
+}
 
 export const wsServers = new WebSocketServers(server, leader);
 

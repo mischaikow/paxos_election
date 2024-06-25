@@ -31,6 +31,18 @@ export class Children {
     return this.children[String(newName)];
   }
 
+  nextAPIPort(childNodeName: string): number {
+    let newPortAPI = 3000;
+    for (const [childName, child] of Object.entries(this.children)) {
+      newPortAPI = Math.max(newPortAPI, child.portApi);
+    }
+    newPortAPI++;
+
+    this.children[childNodeName].portApi = newPortAPI;
+    this.broadcastNeighbors();
+    return newPortAPI;
+  }
+
   listChildren(): string[] {
     return Object.keys(this.children);
   }

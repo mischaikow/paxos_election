@@ -28,3 +28,7 @@ However the code base still has a lot of loose strings, abandonded threads, and 
 - **Set up some illustrative tests** This should allow users to more easily understand what individual functions are doing, and make it easier to safely make changes to the codebase.
 - **Add presentation slides (with notes!)** I gave a one-hour presentation at the [Recurse Center](https://www.recurse.com), and the slides can help understand what this code does.
 - **Drop fetchRetry** This was added because of issues with inter-container communication when running on a local Docker daemon. It's no longer necessary and should be discarded.
+- **Add Node identifier** `[Node ID] ` would make the logs easier read.
+- **Offload port identfier to the machine** Ask the machine on port 0 to assign a port.
+- **Neighbor discovery should be pull** Right now it's push, which means it might be harder to hear.
+- **Pretty print Node stuff in frontend** That way I have fewer things to look at and track.

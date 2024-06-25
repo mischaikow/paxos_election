@@ -53,7 +53,7 @@ export class WebSocketServers {
     if (this.leader.leader === null) {
       this.broadcast(`lost`);
     } else {
-      this.broadcast(`leader - ${this.leader.leader}`);
+      this.broadcast(`leader - ${this.leader.leader.portWs}`);
     }
   }
 

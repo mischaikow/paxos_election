@@ -11,7 +11,14 @@ export interface NodeState {
   portWs: number;
 }
 
-export interface ParentChildMessage {
-  signal: string;
-  data: object[];
+export interface RequestNeighborsMessage {
+  signal: 'child-request-neighbors';
+  data: ChildData[];
 }
+
+export interface RequestNewAPIMessage {
+  signal: 'child-request-new-api';
+  data: { newPort: number }[];
+}
+
+export type ParentChildMessage = RequestNeighborsMessage | RequestNewAPIMessage;

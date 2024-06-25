@@ -1,4 +1,4 @@
-import app from './app.js';
+import app, { getNewAPIPortNumber } from './app.js';
 import { sleep, DOWNTIME } from './helper.js';
 
 const server = app.listen(app.get('port'), () => {
@@ -12,7 +12,7 @@ export async function goDark() {
   server.close(() => {
     console.log('disconnected');
   });
-  // TODO: get new port number from the leader.
+  getNewAPIPortNumber();
   await sleep(DOWNTIME);
   app.listen(app.get('port'), () => {
     console.log('back online');

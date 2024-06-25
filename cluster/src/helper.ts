@@ -2,6 +2,7 @@ import { ChildData, NodeState } from './helper.types.js';
 
 export const DOWNTIME = 7000;
 export const MSG_REQ_NEIGHBORS = 'child-request-neighbors';
+export const MSG_REQ_NEW_API = 'child-request-new-api';
 
 export const STANDING: {
   nack: 'nack';

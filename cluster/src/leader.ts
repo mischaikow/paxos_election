@@ -1,6 +1,6 @@
-import { wsServers } from './app.js';
+import { setPort, wsServers } from './app.js';
 import { sleep } from './helper.js';
-import { ChildData } from './helper.types.js';
+import { ChildData, NodeState } from './helper.types.js';
 import { myFetch } from './myFetch.js';
 import { Paxos } from './paxos.js';
 
@@ -11,13 +11,15 @@ export class Leader {
   searching: boolean;
   paxosElection: Paxos;
 
-  constructor(me: ChildData, neighbors: ChildData[]) {
-    this.me = me;
+  constructor(dataSet: NodeState) {
+    //me: ChildData, neighbors: ChildData[]) {
+    this.me = (({ nodeName, portApi, portWs }) => ({ nodeName, portApi, portWs }))(dataSet);
     this.leader = null;
-    this.neighbors = neighbors;
+    this.neighbors = dataSet.neighbors;
     this.searching = false;
-    const neighborApis = neighbors.map((a) => a.portApi);
+    const neighborApis = this.neighbors.map((a) => a.portApi);
     this.paxosElection = new Paxos(this.me, neighborApis);
+    this.setAppPort();
   }
 
   async shouldLaunchLeaderSearch(): Promise<boolean> {
@@ -45,7 +47,7 @@ export class Leader {
       });
       return true;
     } catch (error) {
-      console.log(`leader is unhealthy ${this.leader.nodeName}`);
+      console.log(`leader is unhealthy ${this.leader?.nodeName}`);
       wsServers.leaderDown();
       this.leader = null;
       return false;
@@ -56,7 +58,7 @@ export class Leader {
     this.searching = true;
     this.leader = null;
     const neighborApis = this.neighbors.map((a) => a.portApi);
-    this.paxosElection = await new Paxos(this.me, neighborApis);
+    this.paxosElection = new Paxos(this.me, neighborApis);
     return true;
   }
 
@@ -79,5 +81,16 @@ export class Leader {
 
   assignNeighbors(neighbors: ChildData[]) {
     this.neighbors = neighbors;
+    const neighborApis = this.neighbors.map((a) => a.portApi);
+    this.paxosElection.assignNeighborApis(neighborApis);
+  }
+
+  changePortApi(newPortApi: number) {
+    this.me.portApi = newPortApi;
+    this.setAppPort();
+  }
+
+  setAppPort() {
+    setPort(this.me.portApi);
   }
 }
