@@ -13,6 +13,13 @@ This implementation contains two parts:
 the backend algorithm that comprises two parts, an omniscient controller which simulates the environment around the nodes and the nodes themselves.
 Additionally, a frontend has been built to provide visualization of the models.
 
+I built this with the purpose of decyphering the Paxos algorithm and try to demistify some of the intrecacies of working with distributed async systems.
+I learned quite a bit about both, but if I were to do this again I would probably instead implement [Raft](<https://en.wikipedia.org/wiki/Raft_(algorithm)>).
+The Paxos algorithm is a giant complicated thing that exists to handle all kinds of scenarios that are not important for leader elections where those that launch the elections, vote in the elections, and tally the votes are all the same nodes.
+
+(As an aside: many places describe Paxos algorithms when referring to a whole class of async election algorithms.
+For example: Etcd uses Raft, but people will often describe it as using Paxos)
+
 ## How to run
 
 ### Backend
@@ -67,8 +74,9 @@ will launch 5 nodes that will select a leader amongst themselves.
 ## Potential To-dos
 
 - Have the nodes/controller dynamically find free ports on the local machine rather than using preassigned ports.
+- Build a test suite to cover the controller and nodes.
 - Improve terminal printouts from the nodes to make it easier to see what's happening.
 - Improve error logging to better distinguish between "simulation errors" and actual problems.
-- Build a test suite to cover the controller and nodes.
 - Allow the frontend to load and accurately capture the state of the model as is.
 - Enhance the frontend to allow permanent degredation of nodes from the webpage.
+- Add presentation slides: I gave a presentation on this algorithm at [RC](recurse.com) that could be modified for easier reading.
