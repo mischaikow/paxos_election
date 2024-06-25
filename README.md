@@ -7,6 +7,8 @@ The implimentation was enhanced to handle cases outside of the original algorith
 
 **This project has reached MVP and I expect to make no changes for a while.**
 
+Note: the code from the last pre-refactor branch is in the `frontend` branch.
+
 ## Details
 
 This implementation contains two parts:
