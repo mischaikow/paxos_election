@@ -1,0 +1,12 @@
+{
+  "name": "1001",
+  "portApi": 3001,
+  "portWs": 4001,
+  "neighborhood": [
+    {
+      "nodeName": "1001",
+      "portApi": 3001,
+      "portWs": 4001
+    }
+  ]
+}

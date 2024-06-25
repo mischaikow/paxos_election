@@ -1,0 +1,16 @@
+{
+  "jsc": {
+    "parser": {
+      "syntax": "typescript",
+      "tsx": false,
+      "decorators": true,
+      "dynamicImport": true
+    },
+    "target": "es2022",
+    "baseUrl": "."
+  },
+  "module": {
+    "type": "commonjs"
+  },
+  "exclude": [".*.spec.tsx?$", ".*.test.tsx?$", ".*.js$"]
+}

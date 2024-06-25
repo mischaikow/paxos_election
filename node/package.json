@@ -1,0 +1,37 @@
+{
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently \"pnpm run watch-compile\" \"pnpm run watch-dev\"",
+    "cluster": "sh ./localcluster.sh",
+    "watch-compile": "swc src -w --out-dir ./dist",
+    "watch-dev": "nodemon -L --watch \"dist/**/*\" -e js ./dist/server.js",
+    "build": "swc src -d dist",
+    "start": "NODE_ENV=production node dist/server.js",
+    "child": "NODE_STATE=child node dist/server.js",
+    "child-dev": "concurrently \"pnpm run watch-compile\" \"pnpm run child-watch-dev\"",
+    "child-watch-dev": "NODE_STATE=child nodemon -L --watch -e js ./dist/server.js"
+  },
+  "dependencies": {
+    "config": "^3.3.11",
+    "express": "^4.18.2",
+    "nodemon": "^3.1.1",
+    "ws": "^8.16.0"
+  },
+  "devDependencies": {
+    "@swc/cli": "^0.1.63",
+    "@swc/core": "^1.3.102",
+    "@tsconfig/node20": "^20.1.2",
+    "@types/config": "^3.3.4",
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.10.7",
+    "@types/ws": "^8.5.10",
+    "@typescript-eslint/eslint-plugin": "^6.18.1",
+    "@typescript-eslint/parser": "^6.18.1",
+    "concurrently": "^8.2.2",
+    "eslint": "^8.56.0",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^3.1.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}

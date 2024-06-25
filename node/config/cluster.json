@@ -1,0 +1,30 @@
+{
+  "portApi": 3001,
+  "neighborhood": [
+    {
+      "nodeName": "1001",
+      "portApi": 3001,
+      "portWs": 4001
+    },
+    {
+      "nodeName": "1002",
+      "portApi": 3002,
+      "portWs": 4002
+    },
+    {
+      "nodeName": "1003",
+      "portApi": 3003,
+      "portWs": 4003
+    },
+    {
+      "nodeName": "1004",
+      "portApi": 3004,
+      "portWs": 4004
+    },
+    {
+      "nodeName": "1005",
+      "portApi": 3005,
+      "portWs": 4005
+    }
+  ]
+}
